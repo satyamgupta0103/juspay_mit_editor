@@ -1,5 +1,5 @@
 import React from "react";
-import Icon from "./Icon";
+
 import useBlockDrag from "../hooks/useBlockDrag";
 import { BLOCKS } from "../blocks/blockTypes";
 
@@ -50,8 +50,7 @@ export default function Sidebar() {
       <div className="font-bold">Events</div>
 
       <div className="flex flex-row flex-wrap bg-yellow-500 text-white px-2 py-1 my-2 text-sm">
-        When <Icon name="flag" size={15} className="text-green-600 mx-2" />{" "}
-        clicked
+        When 🚩 clicked
       </div>
 
       {/* MOTION */}
@@ -75,14 +74,14 @@ export default function Sidebar() {
         ref={turnLeftBlock.drag}
         className="flex flex-row flex-wrap bg-blue-500 text-white px-2 py-1 my-2 text-sm cursor-move"
       >
-        Turn <Icon name="undo" size={15} className="text-white mx-2" /> 15°
+        Turn 🔄 15°
       </div>
 
       <div
         ref={turnRightBlock.drag}
         className="flex flex-row flex-wrap bg-blue-500 text-white px-2 py-1 my-2 text-sm cursor-move"
       >
-        Turn <Icon name="redo" size={15} className="text-white mx-2" /> 15°
+        Turn 🔁 15°
       </div>
 
       <div
