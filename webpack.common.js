@@ -1,14 +1,19 @@
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
     app: "./src/index.js",
   },
+
   output: {
-    // filename: "app.js",
-    path: path.resolve(__dirname, "public"),
+    filename: "[name].[contenthash].js",
+    path: path.resolve(__dirname, "dist"),
+    publicPath: "/",
+    clean: true,
   },
+
   module: {
     rules: [
       {
@@ -20,14 +25,7 @@ module.exports = {
             loader: "postcss-loader",
             options: {
               postcssOptions: {
-                plugins: [
-                  [
-                    "postcss-preset-env",
-                    {
-                      // Options
-                    },
-                  ],
-                ],
+                plugins: [["postcss-preset-env"]],
               },
             },
           },
@@ -45,5 +43,19 @@ module.exports = {
       },
     ],
   },
-  plugins: [new MiniCssExtractPlugin()],
+
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "[name].[contenthash].css",
+    }),
+
+    new HtmlWebpackPlugin({
+      template: "./public/index.html",
+      filename: "index.html",
+    }),
+  ],
+
+  resolve: {
+    extensions: [".js", ".jsx"],
+  },
 };
