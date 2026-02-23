@@ -4,7 +4,8 @@ const initialState = {
   sprites: [
     {
       id: "sprite-1",
-      x: 200,
+      character: "cat", //default character
+      x: 220,
       y: 100,
       rotation: 0,
       message: "",
@@ -23,13 +24,15 @@ const spriteSlice = createSlice({
       reducer(state, action) {
         state.sprites.push(action.payload);
       },
-      prepare() {
+      prepare(character = "cat") {
         const id = nanoid();
+
         return {
           payload: {
             id,
-            x: 100,
-            y: 100,
+            character, //STORE CHARACTER TYPE
+            x: 120,
+            y: 120,
             rotation: 0,
             message: "",
             instructions: [],

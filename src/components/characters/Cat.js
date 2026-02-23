@@ -1,25 +1,11 @@
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setSelectedSprite } from "../store/spriteSlice";
 
-export default function CatSprite({ sprite }) {
-  const dispatch = useDispatch();
-  const selectedId = useSelector((s) => s.sprites.selectedSpriteId);
-  const isSelected = selectedId === sprite.id;
-
+export default function Cat({ message }) {
   return (
-    <div
-      onClick={() => dispatch(setSelectedSprite(sprite.id))}
-      className={`absolute cursor-pointer ${isSelected ? "ring-4 ring-blue-400" : ""}`}
-      style={{
-        left: sprite.x,
-        top: sprite.y,
-        transform: `rotate(${sprite.rotation}deg)`,
-      }}
-    >
-      {sprite.message && (
+    <div className="relative select-none pointer-events-none">
+      {message && (
         <div className="absolute -top-8 left-0 bg-white px-2 py-1 text-xs rounded shadow">
-          {sprite.message}
+          {message}
         </div>
       )}
 
