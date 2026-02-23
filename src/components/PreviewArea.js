@@ -18,13 +18,9 @@ export default function PreviewArea() {
 
   const dispatch = useDispatch();
 
-  // ✅ NEW — selected character from dropdown
   const [selectedCharacter, setSelectedCharacter] = useState("cat");
   const [openChooser, setOpenChooser] = useState(false);
 
-  /**
-   * ▶ Play should run ALL sprites (HR requirement #2)
-   */
   const handlePlay = () => {
     const state = store.getState();
 
@@ -40,9 +36,6 @@ export default function PreviewArea() {
     startCollisionWatcher(store, dispatch);
   }, [dispatch]);
 
-  /**
-   * ✅ Dragging logic (HR requirement #3)
-   */
   const startDragging = (e, sprite) => {
     e.stopPropagation();
 
@@ -133,7 +126,6 @@ export default function PreviewArea() {
         </button>
       </div>
 
-      {/* ✅ Render dynamic character sprites */}
       {sprites.map((sprite) => {
         const Character =
           CHARACTER_MAP[sprite.character] || CHARACTER_MAP["cat"];
