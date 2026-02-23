@@ -10,6 +10,7 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -30,3 +31,4 @@ lib/bs
 public/*.LICENSE.txt
 public/app.js
 public/app.css
+.vercel/
