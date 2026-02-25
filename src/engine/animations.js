@@ -1,35 +1,27 @@
 import { updateSprite } from "../store/spriteSlice";
 import { clamp, getStageBounds } from "./utils";
 
-/**
- * MOVE animation with stage boundary constraint
- */
-export function move(sprite, steps, dispatch, getState) {
+function shouldStop(id, version, getState) {
+  const s = getState().sprites.sprites.find((sp) => sp.id === id);
+  return !s || s.programVersion !== version;
+}
+
+export function move(id, steps, version, dispatch, getState) {
   return new Promise((resolve) => {
     let moved = 0;
-    const direction = steps >= 0 ? 1 : -1;
+    const dir = steps >= 0 ? 1 : -1;
 
     function frame() {
+      if (shouldStop(id, version, getState)) return resolve();
       if (Math.abs(moved) >= Math.abs(steps)) return resolve();
 
-      moved += direction * 2;
+      moved += dir * 2;
 
-      const state = getState();
-      const current = state.sprites.sprites.find((s) => s.id === sprite.id);
-      if (!current) return resolve();
-
+      const s = getState().sprites.sprites.find((sp) => sp.id === id);
       const { width } = getStageBounds();
-      const SPRITE_SIZE = 95; // Approximate size of the sprite for boundary calculations
+      const nextX = clamp(s.x + dir * 2, 0, width - 95);
 
-      const nextX = clamp(current.x + direction * 2, 0, width - SPRITE_SIZE);
-
-      dispatch(
-        updateSprite({
-          id: sprite.id,
-          updates: { x: nextX },
-        }),
-      );
-
+      dispatch(updateSprite({ id, updates: { x: nextX } }));
       requestAnimationFrame(frame);
     }
 
@@ -37,27 +29,21 @@ export function move(sprite, steps, dispatch, getState) {
   });
 }
 
-export function turn(sprite, angle, dispatch, getState) {
+export function turn(id, angle, version, dispatch, getState) {
   return new Promise((resolve) => {
     let rotated = 0;
-    const direction = angle >= 0 ? 1 : -1;
+    const dir = angle >= 0 ? 1 : -1;
 
     function frame() {
+      if (shouldStop(id, version, getState)) return resolve();
       if (Math.abs(rotated) >= Math.abs(angle)) return resolve();
 
-      rotated += direction * 2;
+      rotated += dir * 2;
 
-      const state = getState();
-      const current = state.sprites.sprites.find((s) => s.id === sprite.id);
-      if (!current) return resolve();
-
+      const s = getState().sprites.sprites.find((sp) => sp.id === id);
       dispatch(
-        updateSprite({
-          id: sprite.id,
-          updates: { rotation: current.rotation + direction * 2 },
-        }),
+        updateSprite({ id, updates: { rotation: s.rotation + dir * 2 } }),
       );
-
       requestAnimationFrame(frame);
     }
 
@@ -65,46 +51,21 @@ export function turn(sprite, angle, dispatch, getState) {
   });
 }
 
-export function showMessage(sprite, text, duration, dispatch) {
-  return new Promise((resolve) => {
-    dispatch(
-      updateSprite({
-        id: sprite.id,
-        updates: { message: text },
-      }),
-    );
-
-    setTimeout(() => {
-      dispatch(
-        updateSprite({
-          id: sprite.id,
-          updates: { message: "" },
-        }),
-      );
-      resolve();
-    }, duration * 1000);
-  });
-}
-
-export function goTo(sprite, target, dispatch, getState) {
+export function goTo(id, target, version, dispatch, getState) {
   return new Promise((resolve) => {
     function frame() {
-      const state = getState();
-      const current = state.sprites.sprites.find((s) => s.id === sprite.id);
-      if (!current) return resolve();
+      if (shouldStop(id, version, getState)) return resolve();
 
-      const dx = target.x - current.x;
-      const dy = target.y - current.y;
+      const s = getState().sprites.sprites.find((sp) => sp.id === id);
+      const dx = target.x - s.x;
+      const dy = target.y - s.y;
 
       if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return resolve();
 
       dispatch(
         updateSprite({
-          id: sprite.id,
-          updates: {
-            x: current.x + dx * 0.1,
-            y: current.y + dy * 0.1,
-          },
+          id,
+          updates: { x: s.x + dx * 0.1, y: s.y + dy * 0.1 },
         }),
       );
 
@@ -112,5 +73,20 @@ export function goTo(sprite, target, dispatch, getState) {
     }
 
     frame();
+  });
+}
+
+export function showMessage(id, text, duration, version, dispatch, getState) {
+  return new Promise((resolve) => {
+    if (shouldStop(id, version, getState)) return resolve();
+
+    dispatch(updateSprite({ id, updates: { message: text } }));
+
+    setTimeout(() => {
+      if (!shouldStop(id, version, getState)) {
+        dispatch(updateSprite({ id, updates: { message: "" } }));
+      }
+      resolve();
+    }, duration * 1000);
   });
 }

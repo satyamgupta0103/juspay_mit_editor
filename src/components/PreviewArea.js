@@ -34,7 +34,7 @@ export default function PreviewArea() {
    */
   useEffect(() => {
     startCollisionWatcher(store, dispatch);
-  }, [dispatch]);
+  }, []);
 
   const startDragging = (e, sprite) => {
     e.stopPropagation();

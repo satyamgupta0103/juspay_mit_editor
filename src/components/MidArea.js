@@ -1,37 +1,67 @@
 import React from "react";
 import { useDrop } from "react-dnd";
 import { useDispatch, useSelector } from "react-redux";
-import { addInstruction } from "../store/spriteSlice";
+import { addInstruction, addChildInstruction } from "../store/spriteSlice";
 
-function renderInstruction(inst) {
-  switch (inst.type) {
-    case "MOVE":
-      return `Move ${inst.payload.steps} steps`;
+/* ---------------- RECURSIVE BLOCK ---------------- */
 
-    case "TURN":
-      return `Turn ${inst.payload.angle}°`;
+function InstructionBlock({ inst, index }) {
+  const dispatch = useDispatch();
+  const spriteId = useSelector((s) => s.sprites.selectedSpriteId);
 
-    case "SAY":
-      return `Say "${inst.payload.text}" for ${inst.payload.duration}s`;
+  const [, drop] = useDrop(
+    () => ({
+      accept: "BLOCK",
 
-    case "THINK":
-      return `Think "${inst.payload.text}" for ${inst.payload.duration}s`;
+      drop: (item, monitor) => {
+        if (monitor.didDrop()) return;
 
-    case "GOTO":
-      return `Go to (${inst.payload.x}, ${inst.payload.y})`;
+        if (inst.type !== "REPEAT") return;
 
-    case "REPEAT":
-      return `Repeat ${inst.payload.times} times`;
+        dispatch(
+          addChildInstruction({
+            spriteId,
+            parentIndex: index,
+            instruction: JSON.parse(JSON.stringify(item)),
+          }),
+        );
+      },
+    }),
+    [spriteId, index, inst.type],
+  );
 
-    default:
-      return inst.type;
-  }
+  return (
+    <div className="bg-blue-200 p-2 my-2 rounded shadow-sm">
+      {inst.type === "MOVE" && `Move ${inst.payload.steps} steps`}
+      {inst.type === "TURN" && `Turn ${inst.payload.angle}°`}
+      {inst.type === "GOTO" && `Go to (${inst.payload.x}, ${inst.payload.y})`}
+      {inst.type === "SAY" &&
+        `Say "${inst.payload.text}" for ${inst.payload.duration}s`}
+      {inst.type === "THINK" &&
+        `Think "${inst.payload.text}" for ${inst.payload.duration}s`}
+
+      {inst.type === "REPEAT" && (
+        <div ref={drop} className="bg-yellow-200 p-2 mt-2 rounded">
+          <div>Repeat {inst.payload.times} times</div>
+
+          <div className="ml-4 border-l-2 pl-2 mt-2">
+            {inst.payload.children.length === 0 && (
+              <div className="text-xs text-gray-400">Drop blocks here</div>
+            )}
+
+            {inst.payload.children.map((child, i) => (
+              <InstructionBlock key={i} inst={child} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function MidArea() {
   const dispatch = useDispatch();
-
-  const activeSpriteId = useSelector((state) => state.sprites.selectedSpriteId);
+  const spriteId = useSelector((s) => s.sprites.selectedSpriteId);
 
   const instructions = useSelector((state) => {
     const sprite = state.sprites.sprites.find(
@@ -43,18 +73,19 @@ export default function MidArea() {
   const [, drop] = useDrop(
     () => ({
       accept: "BLOCK",
-      drop: (item) => {
-        if (!activeSpriteId) return;
+
+      drop: (item, monitor) => {
+        if (monitor.didDrop()) return;
 
         dispatch(
           addInstruction({
-            spriteId: activeSpriteId,
-            instruction: item,
+            spriteId,
+            instruction: JSON.parse(JSON.stringify(item)),
           }),
         );
       },
     }),
-    [activeSpriteId],
+    [spriteId],
   );
 
   return (
@@ -67,10 +98,8 @@ export default function MidArea() {
         </p>
       )}
 
-      {instructions.map((inst, index) => (
-        <div key={index} className="bg-blue-200 p-2 my-2 rounded shadow-sm">
-          {renderInstruction(inst)}
-        </div>
+      {instructions.map((inst, i) => (
+        <InstructionBlock key={i} inst={inst} index={i} />
       ))}
     </div>
   );

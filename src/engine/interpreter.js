@@ -2,61 +2,77 @@ import { move, turn, showMessage, goTo } from "./animations";
 import { BLOCKS } from "../blocks/blockTypes";
 
 export async function runProgram(sprite, dispatch, getState) {
-  for (const instruction of sprite.instructions) {
-    const currentSprite = getState().sprites.sprites.find(
-      (s) => s.id === sprite.id,
-    );
+  const startVersion = sprite.programVersion;
 
-    if (!currentSprite) return;
+  async function runInstructions(instructions) {
+    for (const instruction of instructions) {
+      const current = getState().sprites.sprites.find(
+        (s) => s.id === sprite.id,
+      );
+      if (!current) return;
 
-    switch (instruction.type) {
-      case BLOCKS.MOVE:
-        await move(
-          currentSprite,
-          instruction.payload.steps,
-          dispatch,
-          getState,
-        );
-        break;
+      // 🔥 STOP if swapped during execution
+      if (current.programVersion !== startVersion) return;
 
-      case BLOCKS.TURN:
-        await turn(
-          currentSprite,
-          instruction.payload.angle,
-          dispatch,
-          getState,
-        );
-        break;
+      switch (instruction.type) {
+        case BLOCKS.MOVE:
+          await move(
+            sprite.id,
+            instruction.payload.steps,
+            startVersion,
+            dispatch,
+            getState,
+          );
+          break;
 
-      case BLOCKS.GOTO:
-        await goTo(currentSprite, instruction.payload, dispatch, getState);
-        break;
+        case BLOCKS.TURN:
+          await turn(
+            sprite.id,
+            instruction.payload.angle,
+            startVersion,
+            dispatch,
+            getState,
+          );
+          break;
 
-      case BLOCKS.REPEAT:
-        for (let i = 0; i < instruction.payload.times; i++) {
-          for (const inst of sprite.instructions) {
-            if (inst === instruction) continue; // avoid infinite loop
-            await runProgram(
-              { ...sprite, instructions: [inst] },
-              dispatch,
-              getState,
+        case BLOCKS.GOTO:
+          await goTo(
+            sprite.id,
+            instruction.payload,
+            startVersion,
+            dispatch,
+            getState,
+          );
+          break;
+
+        case BLOCKS.REPEAT:
+          for (let i = 0; i < instruction.payload.times; i++) {
+            const cur = getState().sprites.sprites.find(
+              (s) => s.id === sprite.id,
             );
+            if (cur.programVersion !== startVersion) return;
+
+            await runInstructions(instruction.payload.children);
           }
-        }
-        break;
+          break;
 
-      case BLOCKS.SAY:
-      case BLOCKS.THINK:
-        await showMessage(
-          currentSprite,
-          instruction.payload.text,
-          instruction.payload.duration,
-          dispatch,
-        );
-        break;
+        case BLOCKS.SAY:
+        case BLOCKS.THINK:
+          await showMessage(
+            sprite.id,
+            instruction.payload.text,
+            instruction.payload.duration,
+            startVersion,
+            dispatch,
+            getState,
+          );
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
     }
   }
+
+  await runInstructions(sprite.instructions);
 }
